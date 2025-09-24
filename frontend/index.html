@@ -1,0 +1,943 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Face Recognition Upload</title>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Custom CSS สำหรับ animations และ effects พิเศษ -->
+    <style>
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .spinner {
+            animation: spin 1s linear infinite;
+        }
+
+        .gradient-bg {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .gradient-button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .gradient-button:hover {
+            background: linear-gradient(135deg, #5a67d8 0%, #6b46c1 100%);
+        }
+
+        .progress-fill {
+            background: linear-gradient(90deg, #10b981, #059669);
+            transition: width 0.3s ease;
+        }
+
+        .drag-over {
+            @apply border-blue-500 bg-blue-50;
+        }
+
+        .glass-effect {
+            backdrop-filter: blur(10px);
+            background: rgba(255, 255, 255, 0.95);
+        }
+    </style>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        'thai': ['Noto Sans Thai', 'sans-serif']
+                    },
+                    animation: {
+                        'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                        'bounce-slow': 'bounce 2s infinite',
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="min-h-screen gradient-bg font-thai">
+    <!-- Background decoration -->
+    <div class="fixed inset-0 overflow-hidden pointer-events-none">
+        <div class="absolute -top-40 -right-40 w-80 h-80 bg-white opacity-10 rounded-full"></div>
+        <div class="absolute -bottom-40 -left-40 w-96 h-96 bg-white opacity-5 rounded-full"></div>
+        <div class="absolute top-1/2 left-1/4 w-2 h-2 bg-white opacity-20 rounded-full animate-pulse-slow"></div>
+        <div class="absolute top-1/3 right-1/3 w-1 h-1 bg-white opacity-30 rounded-full animate-bounce-slow"></div>
+    </div>
+
+    <div class="relative min-h-screen flex items-center justify-center p-4 sm:p-6 lg:p-8">
+        <div class="w-full max-w-lg">
+            <!-- Main Container -->
+            <div class="glass-effect rounded-2xl shadow-2xl p-6 sm:p-8 border border-white/20">
+                <!-- Header -->
+                <div class="text-center mb-8">
+                    <div class="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full mb-4">
+                        <span class="text-2xl">🎭</span>
+                    </div>
+                    <h1 class="text-2xl sm:text-3xl font-bold text-gray-800 mb-2">
+                        Face Recognition System
+                    </h1>
+                    <p class="text-sm text-gray-600">
+                        อัปโหลดรูปภาพเพื่อบันทึกข้อมูลใบหน้า
+                    </p>
+                </div>
+
+                <!-- Form -->
+                <form id="uploadForm" class="space-y-6">
+                    <!-- Name Input -->
+                    <div class="space-y-2">
+                        <label for="name" class="block text-sm font-semibold text-gray-700">
+                            <span class="flex items-center gap-2">
+                                👤 ชื่อ-นามสกุล
+                                <span class="text-red-500">*</span>
+                            </span>
+                        </label>
+                        <input
+                            type="text"
+                            id="name"
+                            placeholder="กรุณากรอกชื่อ-นามสกุล"
+                            required
+                            class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-0 transition-colors duration-200 bg-white/70 backdrop-blur"
+                        >
+                    </div>
+
+                    <!-- User ID Input -->
+                    <div class="space-y-2">
+                        <label for="user_id" class="block text-sm font-semibold text-gray-700">
+                            <span class="flex items-center gap-2">
+                                🆔 รหัสประจำตัว
+                                <span class="text-red-500">*</span>
+                            </span>
+                        </label>
+                        <input
+                            type="text"
+                            id="user_id"
+                            placeholder="กรุณากรอกรหัสประจำตัว"
+                            required
+                            class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-0 transition-colors duration-200 bg-white/70 backdrop-blur"
+                        >
+                    </div>
+
+                    <!-- File Input -->
+                    <div class="space-y-2">
+                        <label for="image" class="block text-sm font-semibold text-gray-700">
+                            <span class="flex items-center gap-2">
+                                📷 รูปภาพใบหน้า
+                                <span class="text-red-500">*</span>
+                            </span>
+                        </label>
+
+                        <!-- Drop Zone -->
+                        <div id="dropzone" class="relative border-2 border-dashed border-gray-300 rounded-xl p-6 text-center hover:border-blue-400 transition-colors duration-200 bg-white/50 backdrop-blur">
+                            <input
+                                type="file"
+                                id="image"
+                                accept="image/jpeg,image/jpg,image/png"
+                                required
+                                class="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                            >
+                            <div class="pointer-events-none">
+                                <div class="text-4xl mb-2">📁</div>
+                                <p class="text-sm text-gray-600 mb-1">
+                                    <span class="font-semibold text-blue-600">คลิกเพื่อเลือกไฟล์</span> หรือลากไฟล์มาวาง
+                                </p>
+                                <p class="text-xs text-gray-500">
+                                    รองรับ: JPG, JPEG, PNG | ขนาดสูงสุด: 10MB
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- File Info -->
+                        <div class="bg-amber-50 border border-amber-200 rounded-lg p-3">
+                            <div class="flex items-start gap-2">
+                                <span class="text-amber-600 mt-0.5">⚠️</span>
+                                <div class="text-xs text-amber-800">
+                                    <p class="font-semibold mb-1">ข้อกำหนดสำคัญ:</p>
+                                    <ul class="space-y-1 list-disc list-inside">
+                                        <li>รูปภาพต้องมีใบหน้าชัดเจน 1 หน้าเท่านั้น</li>
+                                        <li>ถ่ายในที่มีแสงสว่างเพียงพอ</li>
+                                        <li>หันหน้าตรงเข้ากล้อง</li>
+                                        <li>ไม่สวมแมสก์หรือแว่นกันแดด</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Image Preview Container -->
+                    <div id="previewContainer" class="hidden">
+                        <div class="bg-gray-50 rounded-xl p-4 border-2 border-gray-200">
+                            <p class="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
+                                🖼️ ตัวอย่างรูปภาพ
+                            </p>
+                            <div class="relative">
+                                <img
+                                    id="imagePreview"
+                                    class="w-full max-w-xs mx-auto rounded-lg shadow-md border border-gray-200"
+                                    alt="รูปภาพที่เลือก"
+                                >
+                                <button
+                                    type="button"
+                                    id="removePreview"
+                                    class="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full text-xs hover:bg-red-600 transition-colors"
+                                >
+                                    ✕
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Progress Container -->
+                    <div id="progressContainer" class="hidden space-y-3">
+                        <div class="bg-gray-200 rounded-full h-6 relative overflow-hidden shadow-inner">
+                            <div id="progressFill" class="progress-fill h-full rounded-full transition-all duration-300 ease-out" style="width: 0%"></div>
+                            <div class="absolute inset-0 flex items-center justify-center">
+                                <span id="progressText" class="text-xs font-bold text-gray-700 drop-shadow">0%</span>
+                            </div>
+                        </div>
+                        <p id="progressMessage" class="text-sm text-center text-gray-600 font-medium"></p>
+                    </div>
+
+                    <!-- Submit Button -->
+                    <button
+                        type="submit"
+                        id="submitBtn"
+                        class="w-full py-4 px-6 gradient-button text-white font-bold rounded-xl shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200 focus:outline-none focus:ring-4 focus:ring-blue-300 disabled:opacity-70 disabled:cursor-not-allowed disabled:transform-none disabled:hover:shadow-lg"
+                    >
+                        <span class="flex items-center justify-center gap-2">
+                            <span class="text-lg">📤</span>
+                            อัปโหลดและบันทึกข้อมูล
+                        </span>
+                    </button>
+                </form>
+
+                <!-- Additional Buttons -->
+                <div class="mt-6 space-y-3">
+                    <!-- Recognize Button -->
+                    <button
+                        type="button"
+                        id="recognizeBtn"
+                        class="w-full py-3 px-6 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-xl shadow-lg transition-all duration-200"
+                    >
+                        <span class="flex items-center justify-center gap-2">
+                            <span class="text-lg">🎥</span>
+                            เริ่มตรวจจับใบหน้า Real-time
+                        </span>
+                    </button>
+
+                    <!-- Show Known Faces Button -->
+                    <button
+                        type="button"
+                        id="showFacesBtn"
+                        class="w-full py-3 px-6 bg-gray-600 hover:bg-gray-700 text-white font-semibold rounded-xl shadow-lg transition-all duration-200"
+                    >
+                        <span class="flex items-center justify-center gap-2">
+                            <span class="text-lg">👥</span>
+                            ดูรายชื่อที่บันทึกแล้ว
+                        </span>
+                    </button>
+                </div>
+
+                <!-- Footer -->
+                <div class="mt-8 pt-6 border-t border-gray-200/50">
+                    <p class="text-center text-xs text-gray-500">
+                        ระบบปกป้องข้อมูลส่วนบุคคลตามมาตรฐาน PDPA
+                    </p>
+                </div>
+            </div>
+
+            <!-- Real-time Face Detection Section -->
+            <div id="realtimeSection" class="mt-8 hidden">
+                <div class="glass-effect rounded-2xl shadow-2xl p-6 sm:p-8 border border-white/20">
+                    <h2 class="text-xl sm:text-2xl font-bold text-gray-800 mb-4 text-center">
+                        ตรวจจับใบหน้าแบบ Real-time
+                    </h2>
+                    <div class="relative w-full aspect-video bg-gray-900 rounded-lg overflow-hidden">
+                        <video id="videoElement" autoplay playsinline class="absolute inset-0 w-full h-full object-cover"></video>
+                        <canvas id="overlayCanvas" class="absolute inset-0 w-full h-full"></canvas>
+                    </div>
+                    <p id="realtimeStatus" class="text-center text-sm text-gray-600 mt-3">
+                        <span class="text-blue-500">กำลังรอเริ่มใช้งานกล้อง...</span>
+                    </p>
+                     <button
+                        type="button"
+                        id="stopRealtimeBtn"
+                        class="mt-4 w-full py-3 px-6 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-xl shadow-lg transition-all duration-200"
+                    >
+                        <span class="flex items-center justify-center gap-2">
+                            <span class="text-lg">❌</span>
+                            หยุดตรวจจับ
+                        </span>
+                    </button>
+                    <p class="text-center text-xs text-gray-500 mt-2">
+                        💡 เพื่อความแม่นยำ, หันหน้าตรงเข้ากล้องในที่มีแสงสว่างพอเพียง
+                    </p>
+                </div>
+            </div>
+
+
+            <!-- Additional Info Card -->
+            <div class="mt-6 glass-effect rounded-xl p-4 border border-white/20">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                        <span class="text-lg">💡</span>
+                    </div>
+                    <div>
+                        <h3 class="font-semibold text-gray-800 text-sm">เทคโนโลยี AI Face Recognition</h3>
+                        <p class="text-xs text-gray-600">ระบบจดจำใบหน้าด้วยปัญญาประดิษฐ์ความแม่นยำสูง</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript Libraries -->
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <!-- Main JavaScript -->
+    <script>
+        // API Configuration
+        const API_BASE_URL = 'http://localhost:8000'; // Make sure your FastAPI is running here
+
+        // ตรวจสอบว่ามี axios หรือไม่
+        if (typeof axios === 'undefined') {
+            console.error('axios is required. Please include axios library.');
+            showAlert('ระบบต้องการ axios library กรุณาตรวจสอบการเชื่อมต่ออินเทอร์เน็ต', 'error');
+        }
+
+        // Global variables for real-time detection
+        let videoStream = null;
+        let detectionInterval = null;
+        let isProcessingFrame = false; // To prevent sending too many requests
+
+        const videoElement = document.getElementById('videoElement');
+        const overlayCanvas = document.getElementById('overlayCanvas');
+        const overlayContext = overlayCanvas.getContext('2d');
+        const realtimeStatus = document.getElementById('realtimeStatus');
+        const realtimeSection = document.getElementById('realtimeSection');
+
+        // Main form handler สำหรับ upload
+        document.getElementById('uploadForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            const name = document.getElementById('name').value.trim();
+            const user_id = document.getElementById('user_id').value.trim();
+            const fileInput = document.getElementById('image');
+            const file = fileInput.files[0](undefined)(undefined)(undefined)(undefined)(undefined);
+
+            console.log('Form data:', { name, user_id, file: file ? file.name : 'none' });
+
+            // Basic validation
+            if (!validateForm(name, user_id, file)) {
+                return;
+            }
+
+            const submitBtn = document.getElementById('submitBtn');
+            const originalHTML = submitBtn.innerHTML;
+            setLoading(submitBtn, true);
+
+            try {
+                // ตรวจสอบรูปภาพก่อนส่ง
+                showProgress('🔍 กำลังตรวจสอบรูปภาพ...', 20);
+                await validateImage(file);
+
+                showProgress('📋 กำลังเตรียมข้อมูล...', 40);
+
+                // สร้าง FormData ตามที่ FastAPI server คาดหวัง
+                const formData = new FormData();
+                formData.append('name', name);
+                formData.append('user_id', user_id);  // ตรงกับ server parameter
+                formData.append('image', file);       // ตรงกับ server parameter
+
+                // Debug: แสดงข้อมูลที่ส่ง
+                console.log('FormData entries:');
+                for (let pair of formData.entries()) {
+                    console.log(pair[0](undefined)(undefined)(undefined)(undefined)(undefined) + ':', pair[1](undefined)(undefined)(undefined)(undefined)(undefined) instanceof File ? `File: ${pair[1](undefined)(undefined)(undefined)(undefined)(undefined).name} (${pair[1](undefined)(undefined)(undefined)(undefined)(undefined).size} bytes)` : pair[1](undefined)(undefined)(undefined)(undefined)(undefined));
+                }
+
+                showProgress('☁️ กำลังอัปโหลดและประมวลผล...', 60);
+
+                const response = await axios.post(`${API_BASE_URL}/upload`, formData, {
+                    headers: {
+                        'Content-Type': 'multipart/form-data'
+                    },
+                    timeout: 60000, // 60 seconds for face processing
+                    onUploadProgress: function(progressEvent) {
+                        const uploadPercent = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+                        const totalPercent = 60 + (uploadPercent * 0.4);
+                        updateProgressBar(totalPercent);
+                    }
+                });
+
+                showProgress('✅ สำเร็จ!', 100);
+                await sleep(500);
+                handleSuccess(response.data);
+
+            } catch (error) {
+                console.error('Upload error:', error);
+                handleFaceRecognitionError(error, 'อัปโหลด');
+            } finally {
+                setLoading(submitBtn, false, originalHTML);
+                setTimeout(() => hideProgressBar(), 2000);
+            }
+        });
+
+        // Toggle real-time detection
+        document.getElementById('recognizeBtn').addEventListener('click', async function() {
+            if (realtimeSection.classList.contains('hidden')) {
+                await startRealtimeDetection();
+            } else {
+                stopRealtimeDetection();
+            }
+        });
+
+        document.getElementById('stopRealtimeBtn').addEventListener('click', function() {
+            stopRealtimeDetection();
+        });
+
+
+        async function startRealtimeDetection() {
+            realtimeSection.classList.remove('hidden');
+            realtimeStatus.innerHTML = '<span class="text-blue-500">กำลังเปิดกล้อง...</span>';
+
+            const recognizeButton = document.getElementById('recognizeBtn');
+            recognizeButton.disabled = true; // Disable recognize button temporarily
+            recognizeButton.innerHTML = `<span class="flex items-center justify-center gap-2"><div class="w-4 h-4 border-2 border-white/30 border-t-white rounded-full spinner"></div> กำลังเริ่มต้น...</span>`;
+
+
+            try {
+                // Request camera access
+                videoStream = await navigator.mediaDevices.getUserMedia({ video: true });
+                videoElement.srcObject = videoStream;
+
+                // Wait for video to load and play
+                await new Promise((resolve) => {
+                    videoElement.onloadedmetadata = () => {
+                        videoElement.play();
+                        resolve();
+                    };
+                });
+
+                // Set canvas dimensions to match video
+                const videoWidth = videoElement.videoWidth;
+                const videoHeight = videoElement.videoHeight;
+                overlayCanvas.width = videoWidth;
+                overlayCanvas.height = videoHeight;
+
+                realtimeStatus.innerHTML = '<span class="text-green-500">กล้องพร้อมใช้งาน กำลังตรวจจับใบหน้า...</span>';
+                recognizeButton.disabled = false; // Re-enable
+                // Change button text to stop
+                recognizeButton.innerHTML = `<span class="flex items-center justify-center gap-2"><span class="text-lg">🛑</span> หยุดตรวจจับ Real-time</span>`;
+                recognizeButton.classList.remove('bg-green-600', 'hover:bg-green-700');
+                recognizeButton.classList.add('bg-red-600', 'hover:bg-red-700');
+
+
+                // Start sending frames to backend
+                detectionInterval = setInterval(async () => {
+                    if (isProcessingFrame) return; // Skip if previous frame is still processing
+
+                    isProcessingFrame = true;
+                    try {
+                        const tempCanvas = document.createElement('canvas');
+                        tempCanvas.width = videoWidth;
+                        tempCanvas.height = videoHeight;
+                        const tempContext = tempCanvas.getContext('2d');
+                        tempContext.drawImage(videoElement, 0, 0, videoWidth, videoHeight);
+                        const imageData = tempCanvas.toDataURL('image/jpeg', 0.8); // Convert to JPEG base64
+
+                        const response = await axios.post(`${API_BASE_URL}/recognize_realtime`, { image: imageData }, {
+                            timeout: 5000 // 5 seconds timeout for real-time requests
+                        });
+
+                        drawFaces(response.data.faces, videoWidth, videoHeight);
+                        if (response.data.faces.length > 0) {
+                            const firstFace = response.data.faces[0](undefined)(undefined)(undefined)(undefined)(undefined);
+                            if (firstFace.name && firstFace.id) {
+                                realtimeStatus.innerHTML = `<span class="text-blue-600 font-semibold">พบ: ${firstFace.name} (รหัส: ${firstFace.id})</span>`;
+                            } else {
+                                realtimeStatus.innerHTML = '<span class="text-yellow-600">พบใบหน้า ไม่รู้จัก!</span>';
+                            }
+                        } else {
+                            realtimeStatus.innerHTML = '<span class="text-green-500">กำลังตรวจจับใบหน้า...</span>';
+                        }
+
+
+                    } catch (error) {
+                        console.error('Real-time recognition error:', error);
+                        // Optionally display an error on the status, but keep trying
+                        if (error.response && error.response.status === 404) {
+                             realtimeStatus.innerHTML = '<span class="text-yellow-600">พบใบหน้า ไม่รู้จัก!</span>';
+                        } else if (error.response && error.response.data && error.response.data.detail) {
+                            if (error.response.data.detail.includes("No face found")) {
+                                realtimeStatus.innerHTML = '<span class="text-green-500">กำลังตรวจจับใบหน้า...</span>';
+                            } else {
+                                realtimeStatus.innerHTML = `<span class="text-red-500">ข้อผิดพลาด: ${error.response.data.detail}</span>`;
+                            }
+                        } else {
+                           realtimeStatus.innerHTML = '<span class="text-green-500">พบใบหน้า...</span>';
+                        }
+                    } finally {
+                        isProcessingFrame = false;
+                    }
+                }, 500); // Process every 500ms
+            } catch (err) {
+                console.error('Error accessing camera:', err);
+                realtimeStatus.innerHTML = '<span class="text-red-500">ไม่สามารถเข้าถึงกล้องได้! ตรวจสอบสิทธิ์การเข้าถึง.</span>';
+                showAlert('ไม่สามารถเข้าถึงกล้องได้\n\nโปรดตรวจสอบว่าคุณอนุญาตให้เข้าถึงกล้องและไม่มีโปรแกรมอื่นใช้งานอยู่', 'error');
+                stopRealtimeDetection(); // Clean up if camera access fails
+            } finally {
+                 if (videoStream === null) { // If stream was not successfully initiated
+                    recognizeButton.disabled = false;
+                    recognizeButton.innerHTML = `<span class="flex items-center justify-center gap-2"><span class="text-lg">🎥</span> เริ่มตรวจจับใบหน้า Real-time</span>`;
+                    recognizeButton.classList.remove('bg-red-600', 'hover:bg-red-700');
+                    recognizeButton.classList.add('bg-green-600', 'hover:bg-green-700');
+                 }
+            }
+        }
+
+        function stopRealtimeDetection() {
+            if (videoStream) {
+                videoStream.getTracks().forEach(track => track.stop());
+                videoStream = null;
+            }
+            if (detectionInterval) {
+                clearInterval(detectionInterval);
+                detectionInterval = null;
+            }
+            overlayContext.clearRect(0, 0, overlayCanvas.width, overlayCanvas.height);
+            realtimeSection.classList.add('hidden');
+            realtimeStatus.innerHTML = '<span class="text-blue-500">กำลังรอเริ่มใช้งานกล้อง...</span>';
+
+            const recognizeButton = document.getElementById('recognizeBtn');
+            recognizeButton.disabled = false;
+            recognizeButton.innerHTML = `<span class="flex items-center justify-center gap-2"><span class="text-lg">🎥</span> เริ่มตรวจจับใบหน้า Real-time</span>`;
+            recognizeButton.classList.remove('bg-red-600', 'hover:bg-red-700');
+            recognizeButton.classList.add('bg-green-600', 'hover:bg-green-700');
+        }
+
+        function drawFaces(faces, videoWidth, videoHeight) {
+            overlayContext.clearRect(0, 0, overlayCanvas.width, overlayCanvas.height);
+            // Flip context horizontally if video is also flipped (common for selfie cameras)
+            // if (videoElement.videoWidth > 0 && videoElement.videoHeight > 0) {
+            //     overlayContext.scale(-1, 1);
+            //     overlayContext.translate(-overlayCanvas.width, 0);
+            // }
+
+            faces.forEach(face => {
+                const [top, right, bottom, left] = face.box;
+                const name = face.name || "Unknown";
+                const user_id = face.id || "Unknown";
+                const confidence = face.confidence ? (face.confidence * 100).toFixed(1) : "-";
+
+                // Ensure face box coordinates are within canvas dimensions
+                const x = Math.max(0, left);
+                const y = Math.max(0, top);
+                const width = Math.min(overlayCanvas.width - x, right - left);
+                const height = Math.min(overlayCanvas.height - y, bottom - top);
+
+
+                // Draw rectangle
+                overlayContext.beginPath();
+                overlayContext.rect(x, y, width, height);
+                overlayContext.lineWidth = 3;
+                overlayContext.strokeStyle = name === "Unknown" ? '#FF0000' : '#00FF00'; // Red for unknown, green for known
+                overlayContext.stroke();
+
+                // Draw label background
+                overlayContext.fillStyle = name === "Unknown" ? 'rgba(255, 0, 0, 0.7)' : 'rgba(0, 255, 0, 0.7)';
+                const labelText = `${name} (ID: ${user_id}, ${confidence}%)`;
+                overlayContext.font = 'bold 16px Noto Sans Thai, sans-serif';
+                const textWidth = overlayContext.measureText(labelText).width;
+                overlayContext.fillRect(x, y - 25, textWidth + 10, 25);
+
+                // Draw label text
+                overlayContext.fillStyle = 'white';
+                overlayContext.fillText(labelText, x + 5, y - 7);
+            });
+            // Reset scale/translation if applied
+            // overlayContext.setTransform(1, 0, 0, 1, 0, 0);
+        }
+
+        // Show known faces handler
+        document.getElementById('showFacesBtn').addEventListener('click', async function() {
+            const button = this;
+            const originalHTML = button.innerHTML;
+            setLoadingButton(button, true, 'กำลังโหลด...');
+
+            try {
+                const response = await axios.get(`${API_BASE_URL}/known-faces`);
+
+                const faces = response.data.faces;
+                if (faces && faces.length > 0) {
+                    const faceList = faces.map((face, index) =>
+                        `${index + 1}. ${face.name} (รหัส: ${face.id})`
+                    ).join('\n');
+
+                    showAlert(
+                        `👥 รายชื่อที่บันทึกในระบบ (${faces.length} คน):\n\n${faceList}`,
+                        'info'
+                    );
+                } else {
+                    showAlert('📭 ยังไม่มีข้อมูลใบหน้าในระบบ\n\nกรุณาอัปโหลดข้อมูลใบหน้าก่อน', 'info');
+                }
+            } catch (error) {
+                console.error('Get faces error:', error);
+                showAlert('❌ ไม่สามารถดึงข้อมูลได้\n\nกรุณาลองใหม่อีกครั้ง', 'error');
+            } finally {
+                setLoadingButton(button, false, originalHTML);
+            }
+        });
+
+        // ฟังก์ชันตรวจสอบข้อมูล
+        function validateForm(name, user_id, file) {
+            const errors = [];
+
+            if (!name || name.length < 2) {
+                errors.push('❌ กรุณากรอกชื่อ-นามสกุล (อย่างน้อย 2 ตัวอักษร)');
+            }
+
+            if (!user_id || user_id.length < 1) {
+                errors.push('❌ กรุณากรอกรหัสประจำตัว');
+            }
+
+            if (!file) {
+                errors.push('❌ กรุณาเลือกไฟล์รูปภาพ');
+                return showValidationErrors(errors);
+            }
+
+            // ตรวจสอบประเภทไฟล์ให้ตรงกับ server
+            const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png'];
+            if (!allowedTypes.includes(file.type.toLowerCase())) {
+                errors.push('❌ กรุณาเลือกไฟล์ JPG, JPEG หรือ PNG เท่านั้น');
+            }
+
+            const maxSize = 10 * 1024 * 1024; // 10MB
+            if (file.size > maxSize) {
+                errors.push('❌ ขนาดไฟล์ต้องไม่เกิน 10MB');
+            }
+
+            const minSize = 1024; // 1KB
+            if (file.size < minSize) {
+                errors.push('❌ ไฟล์รูปภาพมีขนาดเล็กเกินไป');
+            }
+
+            if (errors.length > 0) {
+                return showValidationErrors(errors);
+            }
+
+            return true;
+        }
+
+        function showValidationErrors(errors) {
+            showAlert(errors.join('\n'), 'error');
+            return false;
+        }
+
+        // ฟังก์ชันตรวจสอบรูปภาพก่อนส่ง
+        async function validateImage(file) {
+            return new Promise((resolve, reject) => {
+                const img = new Image();
+
+                img.onload = function() {
+                    if (img.width < 100 || img.height < 100) {
+                        reject(new Error('รูปภาพมีความละเอียดต่ำเกินไป (ต้องมากกว่า 100x100 pixels)'));
+                        return;
+                    }
+
+                    if (img.width > 4000 || img.height > 4000) {
+                        reject(new Error('รูปภาพมีความละเอียดสูงเกินไป (ต้องน้อยกว่า 4000x4000 pixels)'));
+                        return;
+                    }
+
+                    resolve(true);
+                };
+
+                img.onerror = function() {
+                    reject(new Error('ไม่สามารถโหลดรูปภาพได้ กรุณาตรวจสอบไฟล์'));
+                };
+
+                img.src = URL.createObjectURL(file);
+            });
+        }
+
+        // ฟังก์ชันจัดการ loading state
+        function setLoading(button, isLoading, originalHTML = null) {
+            if (isLoading) {
+                button.disabled = true;
+                button.innerHTML = `
+                    <span class="flex items-center justify-center gap-2">
+                        <div class="w-4 h-4 border-2 border-white/30 border-t-white rounded-full spinner"></div>
+                        กำลังประมวลผล...
+                    </span>
+                `;
+                showProgressBar();
+            } else {
+                button.disabled = false;
+                if (originalHTML) {
+                    button.innerHTML = originalHTML;
+                }
+            }
+        }
+
+        function setLoadingButton(button, isLoading, loadingText) {
+            if (isLoading) {
+                button.disabled = true;
+                const originalContent = button.innerHTML;
+                button.setAttribute('data-original-content', originalContent); // Store original content
+                button.innerHTML = `
+                    <span class="flex items-center justify-center gap-2">
+                        <div class="w-4 h-4 border-2 border-white/30 border-t-white rounded-full spinner"></div>
+                        ${loadingText}
+                    </span>
+                `;
+            } else {
+                button.disabled = false;
+                const originalContent = button.getAttribute('data-original-content');
+                if (originalContent) {
+                    button.innerHTML = originalContent;
+                }
+            }
+        }
+
+        // ฟังก์ชันจัดการ progress bar
+        function showProgressBar() {
+            const progressContainer = document.getElementById('progressContainer');
+            progressContainer.classList.remove('hidden');
+        }
+
+        function hideProgressBar() {
+            const progressContainer = document.getElementById('progressContainer');
+            progressContainer.classList.add('hidden');
+        }
+
+        function updateProgressBar(percent) {
+            const progressFill = document.getElementById('progressFill');
+            const progressText = document.getElementById('progressText');
+
+            progressFill.style.width = percent + '%';
+            progressText.textContent = Math.round(percent) + '%';
+        }
+
+        function showProgress(message, percent) {
+            updateProgressBar(percent);
+            const progressMessage = document.getElementById('progressMessage');
+            progressMessage.textContent = message;
+        }
+
+        // ฟังก์ชันจัดการเมื่อสำเร็จ
+        function handleSuccess(data) {
+            console.log('Success response:', data);
+
+            const message = data.message || 'อัปโหลดและบันทึกข้อมูลสำเร็จ! 🎉';
+            showAlert(`${message}\n\nชื่อ: ${data.name}\nรหัส: ${data.id}`, 'success');
+
+            // Reset form
+            document.getElementById('uploadForm').reset();
+            hideImagePreview();
+        }
+
+        // ฟังก์ชันจัดการ error เฉพาะสำหรับ face recognition
+        function handleFaceRecognitionError(error, type = 'unknown') {
+            let errorMessage = `เกิดข้อผิดพลาดในการ${type}`;
+
+            if (error.response) {
+                const status = error.response.status;
+                const data = error.response.data;
+
+                console.log('Error response:', { status, data });
+
+                switch (status) {
+                    case 400:
+                        if (data.detail) {
+                            if (data.detail.includes('ไม่พบใบหน้าในภาพ')) {
+                                errorMessage = '😔 ไม่พบใบหน้าในรูปภาพ\n\n💡 คำแนะนำ:\n• ใช้รูปที่มีใบหน้าชัดเจน\n• ถ่ายในที่ที่มีแสงสว่างเพียงพอ\n• หันหน้าตรงเข้ากล้อง\n• หลีกเลี่ยงการสวมแมสก์หรือแว่นกันแดด';
+                            } else if (data.detail.includes('มีใบหน้ามากกว่า 1 หน้า')) {
+                                errorMessage = '👥 พบใบหน้ามากกว่า 1 หน้าในรูป\n\n💡 คำแนะนำ:\n• ใช้รูปที่มีใบหน้าเพียง 1 หน้าเท่านั้น\n• ครอบตัดรูปให้เหลือเฉพาะใบหน้าของคุณ\n• หลีกเลี่ยงการถ่ายรูปกลุ่ม';
+                            } else if (data.detail.includes('ไม่สามารถสร้าง encoding')) {
+                                errorMessage = '🔧 ไม่สามารถประมวลผลใบหน้าได้\n\n💡 คำแนะนำ:\n• ใช้รูปที่คมชัดขึ้น\n• ลองถ่ายรูปใหม่ในมุมที่แตกต่าง\n• ตรวจสอบว่าใบหน้าไม่มีสิ่งบดบัง';
+                            } else if (data.detail.includes('รองรับไฟล์')) {
+                                errorMessage = '📄 ประเภทไฟล์ไม่ถูกต้อง\n\nกรุณาใช้ไฟล์ JPG, JPEG หรือ PNG เท่านั้น';
+                            } else {
+                                errorMessage = `❌ ${data.detail}`;
+                            }
+                        }
+                        break;
+                    case 404:
+                        if (type === 'อัปโหลด') {
+                             errorMessage = '😔 Endpoint ในการอัปโหลดไม่ถูกต้อง\n\nโปรดตรวจสอบ URL ของ API';
+                        } else if (data.detail && data.detail.includes("ไม่พบใบหน้าที่ตรงกัน")) {
+                            errorMessage = '😔 ไม่พบใบหน้าที่ตรงกันในระบบ\n\nกรุณาลองอัปโหลดข้อมูลใบหน้าก่อน';
+                        } else {
+                            errorMessage = '🚧 ไม่พบ API Endpoint\n\nโปรดตรวจสอบการตั้งค่า URL ของ API';
+                        }
+                        break;
+                    case 413:
+                        errorMessage = '📦 ไฟล์มีขนาดใหญ่เกินไป\n\nกรุณาลดขนาดไฟล์หรือใช้รูปความละเอียดต่ำกว่า';
+                        break;
+                    case 422:
+                        if (data.detail && Array.isArray(data.detail)) {
+                            const fieldErrors = data.detail.map(err => {
+                                const field = err.loc ? err.loc.join('.') : 'unknown';
+                                const message = err.msg || 'invalid';
+                                return `• ${field}: ${message}`;
+                            }).join('\n');
+
+                            errorMessage = `❌ ข้อมูลไม่ถูกต้อง:\n\n${fieldErrors}\n\n💡 กรุณาตรวจสอบข้อมูลและลองใหม่`;
+                        } else {
+                            errorMessage = `❌ ${data.detail || 'ข้อมูลไม่ถูกต้อง'}`;
+                        }
+                        break;
+                    case 500:
+                        errorMessage = '⚙️ เกิดข้อผิดพลาดภายในเซิร์ฟเวอร์\n\nกรุณาลองใหม่อีกครั้ง หรือติดต่อผู้ดูแลระบบ';
+                        break;
+                    default:
+                        errorMessage = `❌ เกิดข้อผิดพลาด (${status})\n\n${data.detail || 'กรุณาลองใหม่อีกครั้ง'}`;
+                }
+            } else if (error.request) {
+                errorMessage = '🌐 ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์ได้\n\nกรุณาตรวจสอบ:\n• การเชื่อมต่ออินเทอร์เน็ต\n• เซิร์ฟเวอร์ทำงานที่ localhost:8000';
+            } else if (error.message && error.message.includes('timeout')) {
+                errorMessage = '⏰ การประมวลผลใช้เวลานานเกินไป\n\nลองใช้รูปที่มีขนาดเล็กกว่า หรือลองใหม่อีกครั้ง';
+            } else {
+                errorMessage = `❌ ${error.message || 'เกิดข้อผิดพลาดที่ไม่ทราบสาเหตุ'}`;
+            }
+
+            showAlert(errorMessage, 'error');
+        }
+
+        // ฟังก์ชันแสดง alert ด้วย SweetAlert2
+        function showAlert(message, type = 'info') {
+            if (typeof Swal !== 'undefined') {
+                const config = {
+                    text: message,
+                    confirmButtonText: 'ตกลง',
+                    customClass: {
+                        confirmButton: 'gradient-button !bg-none px-6 py-2 text-white font-semibold rounded-lg',
+                        popup: 'rounded-2xl'
+                    },
+                    buttonsStyling: false
+                };
+
+                switch (type) {
+                    case 'success':
+                        config.title = '🎉 สำเร็จ!';
+                        config.icon = 'success';
+                        config.iconColor = '#10b981';
+                        break;
+                    case 'error':
+                        config.title = '⚠️ แจ้งเตือน';
+                        config.icon = 'error';
+                        config.iconColor = '#ef4444';
+                        break;
+                    case 'warning':
+                        config.title = '🔍 ผลการจดจำ';
+                        config.icon = 'warning';
+                        config.iconColor = '#f59e0b';
+                        break;
+                    default:
+                        config.title = '📋 ข้อมูล';
+                        config.icon = 'info';
+                        config.iconColor = '#3b82f6';
+                }
+
+                Swal.fire(config);
+            } else {
+                alert(message);
+            }
+        }
+
+        // Image Preview Functions
+        function showImagePreview(file) {
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                const previewContainer = document.getElementById('previewContainer');
+                const imagePreview = document.getElementById('imagePreview');
+
+                imagePreview.src = event.target.result;
+                previewContainer.classList.remove('hidden');
+
+                // Add file info
+                const fileInfo = `${(file.size / 1024 / 1024).toFixed(2)} MB • ${file.type}`;
+                imagePreview.title = fileInfo;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function hideImagePreview() {
+            const previewContainer = document.getElementById('previewContainer');
+            if (previewContainer) {
+                previewContainer.classList.add('hidden');
+            }
+        }
+
+        // Event Listeners
+        document.getElementById('image').addEventListener('change', function(e) {
+            const file = e.target.files[0](undefined)(undefined)(undefined)(undefined)(undefined);
+            if (file) {
+                showImagePreview(file);
+            } else {
+                hideImagePreview();
+            }
+        });
+
+        document.getElementById('removePreview').addEventListener('click', function() {
+            document.getElementById('image').value = '';
+            hideImagePreview();
+        });
+
+        // Drag & Drop functionality
+        const dropzone = document.getElementById('dropzone');
+        const fileInput = document.getElementById('image');
+
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            dropzone.addEventListener(eventName, preventDefaults, false);
+        });
+
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropzone.addEventListener(eventName, () => {
+                dropzone.classList.add('drag-over');
+            }, false);
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropzone.addEventListener(eventName, () => {
+                dropzone.classList.remove('drag-over');
+            }, false);
+        });
+
+        dropzone.addEventListener('drop', handleDrop, false);
+
+        function handleDrop(e) {
+            const dt = e.dataTransfer;
+            const files = dt.files;
+
+            if (files.length > 0) {
+                fileInput.files = files;
+                fileInput.dispatchEvent(new Event('change', { bubbles: true }));
+            }
+        }
+
+        // Utility functions
+        function sleep(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+
+        console.log('🎭 Face Recognition System Ready!');
+        console.log('API Server:', API_BASE_URL);
+    </script>
+
+    <!-- Optional: Canvas Confetti for celebration -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+</body>
+</html>

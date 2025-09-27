@@ -330,7 +330,7 @@
             const name = document.getElementById('name').value.trim();
             const user_id = document.getElementById('user_id').value.trim();
             const fileInput = document.getElementById('image');
-            const file = fileInput.files[0](undefined)(undefined)(undefined)(undefined)(undefined);
+            const file = fileInput.files[0];
 
             console.log('Form data:', { name, user_id, file: file ? file.name : 'none' });
 
@@ -359,7 +359,7 @@
                 // Debug: แสดงข้อมูลที่ส่ง
                 console.log('FormData entries:');
                 for (let pair of formData.entries()) {
-                    console.log(pair[0](undefined)(undefined)(undefined)(undefined)(undefined) + ':', pair[1](undefined)(undefined)(undefined)(undefined)(undefined) instanceof File ? `File: ${pair[1](undefined)(undefined)(undefined)(undefined)(undefined).name} (${pair[1](undefined)(undefined)(undefined)(undefined)(undefined).size} bytes)` : pair[1](undefined)(undefined)(undefined)(undefined)(undefined));
+                    console.log(pair[0] + ':', pair[1] instanceof File ? `File: ${pair[1].name} (${pair[1].size} bytes)` : pair[1]);
                 }
 
                 showProgress('☁️ กำลังอัปโหลดและประมวลผล...', 60);
@@ -878,7 +878,7 @@
 
         // Event Listeners
         document.getElementById('image').addEventListener('change', function(e) {
-            const file = e.target.files[0](undefined)(undefined)(undefined)(undefined)(undefined);
+            const file = e.target.files[0];
             if (file) {
                 showImagePreview(file);
             } else {
